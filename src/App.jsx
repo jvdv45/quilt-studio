@@ -5,7 +5,6 @@ import { useState, useRef, useCallback, useEffect } from "react";
 
 const GAP = 3;
 const BORDER = 3;
-const MIN_CELL = 24;
 const DEFAULT_CELL = 72;
 
 // ── Template helpers ─────────────────────────────────────────────
@@ -100,7 +99,7 @@ export default function QuiltDesigner() {
       const { width, height } = el.getBoundingClientRect();
       const cellW = Math.floor((width  - 48 - BORDER * 2 - GAP * (cols - 1)) / cols);
       const cellH = Math.floor((height - 48 - BORDER * 2 - GAP * (rows - 1)) / rows);
-      setCellSize(Math.max(MIN_CELL, Math.min(cellW, cellH)));
+      setCellSize(Math.max(4, Math.min(cellW, cellH)));
     };
     compute();
     const ro = new ResizeObserver(compute);
@@ -116,8 +115,9 @@ export default function QuiltDesigner() {
 
   // ── Grid creation ─────────────────────────────────────────────
   const generateGrid = () => {
-    const r = Math.max(1, Math.min(20, parseInt(rows) || 4));
-    const c = Math.max(1, Math.min(20, parseInt(cols) || 4));
+    const r = Math.max(1, Math.min(100, parseInt(rows) || 4));
+    const c = Math.max(1, Math.min(100, parseInt(cols) || 4));
+    setRows(r); setCols(c);
     setGrid(Array.from({ length: r }, () => Array(c).fill(null)));
     setZoomMode(false); setScale(1); setPan({ x: 0, y: 0 });
     setPhase("design");
@@ -460,12 +460,12 @@ export default function QuiltDesigner() {
             <div style={S.dimRow}>
               <div style={S.dimGroup}>
                 <label style={S.dimLabel}>Columns</label>
-                <input type="number" min={1} max={20} value={cols} onChange={(e) => setCols(e.target.value)} style={S.dimInput} />
+                <input type="number" min={1} max={100} value={cols} onChange={(e) => setCols(e.target.value)} style={S.dimInput} />
               </div>
               <span style={S.dimX}>x</span>
               <div style={S.dimGroup}>
                 <label style={S.dimLabel}>Rows</label>
-                <input type="number" min={1} max={20} value={rows} onChange={(e) => setRows(e.target.value)} style={S.dimInput} />
+                <input type="number" min={1} max={100} value={rows} onChange={(e) => setRows(e.target.value)} style={S.dimInput} />
               </div>
             </div>
             <div style={S.previewLabel}>{cols} x {rows} = {cols * rows} blocks</div>
