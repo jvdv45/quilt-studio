@@ -529,7 +529,7 @@ export default function QuiltDesigner() {
               ) : (
                 <button style={S.replaceBtn} onClick={startReplaceMode}>Replace All</button>
               )}
-              <button style={{ ...S.cancelBtn, opacity: history.length ? 1 : 0.4, cursor: history.length ? "pointer" : "default" }} onClick={undo} disabled={!history.length}>↩ Undo</button>
+              <button style={{ ...S.cancelBtn, opacity: history.length ? 1 : 0.5, cursor: history.length ? "pointer" : "not-allowed", color: DARK, borderColor: DARK }} onClick={undo} disabled={!history.length}>↩ Undo</button>
               <p style={S.hint}>{zoomMode ? "Pinch to zoom  ·  Drag to pan  ·  Tap to paint" : "Select a fabric, then tap or drag blocks to paint."}</p>
             </div>
 
