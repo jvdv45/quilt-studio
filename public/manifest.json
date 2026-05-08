@@ -1,0 +1,24 @@
+{
+  "name": "Quilt Studio",
+  "short_name": "Quilt Studio",
+  "description": "Design beautiful quilts with your own fabric photos",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#fdf6ee",
+  "theme_color": "#2c1f14",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

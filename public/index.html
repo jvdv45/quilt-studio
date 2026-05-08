@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#2c1f14" />
+    <meta name="description" content="Design beautiful quilts with your own fabric photos" />
+
+    <!-- iOS PWA support -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Quilt Studio" />
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/icon-192.png" />
+
+    <!-- Standard PWA -->
+    <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    <link rel="icon" href="%PUBLIC_URL%/icon-192.png" />
+
+    <title>Quilt Studio</title>
+
+    <style>
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body, #root { height: 100%; width: 100%; }
+      body {
+        overflow: hidden;
+        /* Prevent iOS bounce scroll */
+        position: fixed;
+        width: 100%;
+      }
+      /* iOS safe area padding for notch/home indicator */
+      #root {
+        padding-top: env(safe-area-inset-top);
+        padding-bottom: env(safe-area-inset-bottom);
+        height: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <noscript>You need to enable JavaScript to run Quilt Studio.</noscript>
+    <div id="root"></div>
+  </body>
+</html>

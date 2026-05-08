@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 192 192">
+  <rect width="192" height="192" rx="32" fill="#2c1f14"/>
+  <!-- Quilt grid: 4x4 blocks with gap -->
+  <!-- Row 1 -->
+  <rect x="12" y="12" width="40" height="40" rx="3" fill="#e8c8a0"/>
+  <rect x="56" y="12" width="40" height="40" rx="3" fill="#a8c8e8"/>
+  <rect x="100" y="12" width="40" height="40" rx="3" fill="#c8e8a8"/>
+  <rect x="144" y="12" width="40" height="40" rx="3" fill="#e8a8c8"/>
+  <!-- Row 2 -->
+  <rect x="12" y="56" width="40" height="40" rx="3" fill="#c8a8e8"/>
+  <rect x="56" y="56" width="40" height="40" rx="3" fill="#e8c8a0"/>
+  <rect x="100" y="56" width="40" height="40" rx="3" fill="#a8c8e8"/>
+  <rect x="144" y="56" width="40" height="40" rx="3" fill="#c8e8a8"/>
+  <!-- Row 3 -->
+  <rect x="12" y="100" width="40" height="40" rx="3" fill="#e8a8c8"/>
+  <rect x="56" y="100" width="40" height="40" rx="3" fill="#c8a8e8"/>
+  <rect x="100" y="100" width="40" height="40" rx="3" fill="#e8c8a0"/>
+  <rect x="144" y="100" width="40" height="40" rx="3" fill="#a8c8e8"/>
+  <!-- Row 4 -->
+  <rect x="12" y="144" width="40" height="40" rx="3" fill="#c8e8a8"/>
+  <rect x="56" y="144" width="40" height="40" rx="3" fill="#e8a8c8"/>
+  <rect x="100" y="144" width="40" height="40" rx="3" fill="#c8a8e8"/>
+  <rect x="144" y="144" width="40" height="40" rx="3" fill="#e8c8a0"/>
+</svg>
