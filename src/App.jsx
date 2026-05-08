@@ -51,6 +51,7 @@ export default function QuiltDesigner() {
   const [replaceFrom, setReplaceFrom] = useState(null);
   const [toast, setToast] = useState(null);
   const [zoomMode, setZoomMode] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [exportImage, setExportImage] = useState(null);
   const [exporting, setExporting] = useState(false);
 
@@ -100,11 +101,12 @@ export default function QuiltDesigner() {
       const cellH = Math.floor((height - 48 - BORDER * 2 - GAP * (rows - 1)) / rows);
       setCellSize(Math.max(4, Math.min(cellW, cellH)));
     };
-    compute();
+    // Delay slightly so the sidebar CSS transition finishes before measuring
+    const t = setTimeout(compute, 220);
     const ro = new ResizeObserver(compute);
     ro.observe(el);
-    return () => ro.disconnect();
-  }, [phase, cols, rows, zoomMode]);
+    return () => { clearTimeout(t); ro.disconnect(); };
+  }, [phase, cols, rows, zoomMode, sidebarOpen]);
 
   const toggleZoom = () => {
     if (zoomMode) { setScale(1); setPan({ x: 0, y: 0 }); }
@@ -508,7 +510,7 @@ export default function QuiltDesigner() {
       {/* ── Design screen ── */}
       {phase === "design" && (
         <div style={S.designWrap}>
-          <aside style={S.sidebar}>
+          <aside style={{ ...S.sidebar, width: sidebarOpen ? 216 : 0, minWidth: 0 }}>
             <div style={S.section}>
               <div style={S.sectionHead}>
                 <span style={S.sectionLabel}>Fabrics</span>
@@ -561,7 +563,14 @@ export default function QuiltDesigner() {
               <div style={S.gridInfo}>{cols} x {rows}</div>
               <button style={S.ghostBtn2} onClick={() => setPhase("setup")}>Resize / New</button>
             </div>
+            <div style={{ position: "sticky", bottom: 0, background: "#fff", borderTop: `1px solid ${WARM}` }}>
+              <button style={S.sidebarToggleBtn} onClick={() => setSidebarOpen(false)}>‹ Hide panel</button>
+            </div>
           </aside>
+
+          {!sidebarOpen && (
+            <button style={S.sidebarReopenBtn} onClick={() => setSidebarOpen(true)}>›</button>
+          )}
 
           <main
             ref={canvasAreaRef}
@@ -656,8 +665,10 @@ const S = {
   miniDot: { width: 8, height: 8, background: ACCENT, borderRadius: 1 },
 
   designWrap: { flex: 1, display: "flex", overflow: "hidden", minHeight: 0 },
-  sidebar: { width: 216, background: "#fff", borderRight: `1px solid ${WARM}`, display: "flex", flexDirection: "column", overflowY: "auto", flexShrink: 0 },
-  section: { padding: "16px", borderBottom: `1px solid ${WARM}` },
+  sidebar: { background: "#fff", borderRight: `1px solid ${WARM}`, display: "flex", flexDirection: "column", overflowY: "auto", overflowX: "hidden", flexShrink: 0, transition: "width 0.2s ease" },
+  sidebarToggleBtn: { width: "100%", minWidth: 216, background: "transparent", border: "none", color: MID, padding: "12px 16px", textAlign: "left", cursor: "pointer", fontSize: 13, fontFamily: "Georgia, serif" },
+  sidebarReopenBtn: { position: "fixed", bottom: 20, left: 0, zIndex: 200, background: "#fff", border: `1px solid ${WARM}`, borderLeft: "none", borderRadius: "0 6px 6px 0", color: MID, fontSize: 16, padding: "10px 8px", cursor: "pointer", boxShadow: "2px 2px 8px rgba(0,0,0,0.1)" },
+  section: { padding: "16px", borderBottom: `1px solid ${WARM}`, minWidth: 216 },
   sectionHead: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 },
   sectionLabel: { fontSize: 10, letterSpacing: "0.18em", textTransform: "uppercase", color: MID, display: "block", marginBottom: 8 },
   addBtn: { background: ACCENT, color: "#fff", border: "none", padding: "4px 10px", borderRadius: 4, fontSize: 12, cursor: "pointer", position: "relative", display: "inline-block", userSelect: "none" },

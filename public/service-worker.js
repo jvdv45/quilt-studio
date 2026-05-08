@@ -3,14 +3,12 @@
    Uses a cache-first strategy: serve from cache, fall back to network.
 */
 
-const CACHE_NAME = "quilt-studio-v1";
+const CACHE_NAME = "quilt-studio-v2";
 
-// All the files that make up the app shell
+// Only cache stable URLs — hashed JS/CSS filenames are cached dynamically on first fetch
 const PRECACHE_URLS = [
   "/",
   "/index.html",
-  "/static/js/main.chunk.js",
-  "/static/js/bundle.js",
   "/manifest.json",
   "/icon-192.png",
   "/icon-512.png"
