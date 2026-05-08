@@ -73,6 +73,22 @@ export default function QuiltDesigner() {
   const mouseDownPos = useRef(null);
   const fileInputId = "fabric-file-input";
 
+  // Undo
+  const [history, setHistory] = useState([]);
+  const gridRef = useRef(grid);
+  useEffect(() => { gridRef.current = grid; }, [grid]);
+  const strokeHistoryPushed = useRef(false);
+  const pushHistory = useCallback(() => {
+    setHistory((h) => [...h.slice(-19), gridRef.current.map((row) => [...row])]);
+  }, []);
+  const undo = useCallback(() => {
+    setHistory((h) => {
+      if (!h.length) return h;
+      setGrid(h[h.length - 1]);
+      return h.slice(0, -1);
+    });
+  }, []);
+
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 2600); };
 
   // Fit-to-screen cell sizing
@@ -144,8 +160,9 @@ export default function QuiltDesigner() {
   // ── Painting ──────────────────────────────────────────────────
   const paintCell = useCallback((r, c) => {
     if (!selectedFabric) return;
+    if (!strokeHistoryPushed.current) { pushHistory(); strokeHistoryPushed.current = true; }
     setGrid((prev) => { const next = prev.map((row) => [...row]); next[r][c] = selectedFabric.id; return next; });
-  }, [selectedFabric]);
+  }, [selectedFabric, pushHistory]);
 
   const handleCellInteract = useCallback((r, c) => {
     if (replaceMode) {
@@ -155,13 +172,14 @@ export default function QuiltDesigner() {
         showToast(target ? "Now select the replacement fabric and tap any block" : "Now select a fabric to fill empty cells");
       } else {
         const replaceTo = selectedFabric ? selectedFabric.id : null;
+        pushHistory();
         setGrid((prev) => prev.map((row) => row.map((cell) => (cell === target ? replaceTo : cell))));
         setReplaceMode(false); setReplaceFrom(null); showToast("Replaced!");
       }
       return;
     }
     paintCell(r, c);
-  }, [replaceMode, replaceFrom, grid, selectedFabric, paintCell]);
+  }, [replaceMode, replaceFrom, grid, selectedFabric, paintCell, pushHistory]);
 
   // Touch drag (fit mode)
   const handleTouchMove = useCallback((e) => {
@@ -195,10 +213,10 @@ export default function QuiltDesigner() {
     if (e.changedTouches.length === 1 && !isDragging.current) {
       const t = e.changedTouches[0];
       const el = document.elementFromPoint(t.clientX, t.clientY);
-      if (el?.dataset.row !== undefined) handleCellInteract(Number(el.dataset.row), Number(el.dataset.col));
+      if (el?.dataset.row !== undefined) { strokeHistoryPushed.current = false; handleCellInteract(Number(el.dataset.row), Number(el.dataset.col)); }
     }
   };
-  const handleZoomMouseDown = (e) => { mouseDownPos.current = { x: e.clientX, y: e.clientY, px: pan.x, py: pan.y }; isDragging.current = false; };
+  const handleZoomMouseDown = (e) => { strokeHistoryPushed.current = false; mouseDownPos.current = { x: e.clientX, y: e.clientY, px: pan.x, py: pan.y }; isDragging.current = false; };
   const handleZoomMouseMove = (e) => {
     if (!mouseDownPos.current) return;
     const dx = e.clientX - mouseDownPos.current.x, dy = e.clientY - mouseDownPos.current.y;
@@ -511,6 +529,7 @@ export default function QuiltDesigner() {
               ) : (
                 <button style={S.replaceBtn} onClick={startReplaceMode}>Replace All</button>
               )}
+              <button style={{ ...S.cancelBtn, opacity: history.length ? 1 : 0.4, cursor: history.length ? "pointer" : "default" }} onClick={undo} disabled={!history.length}>↩ Undo</button>
               <p style={S.hint}>{zoomMode ? "Pinch to zoom  ·  Drag to pan  ·  Tap to paint" : "Select a fabric, then tap or drag blocks to paint."}</p>
             </div>
 
@@ -540,10 +559,10 @@ export default function QuiltDesigner() {
                 return (
                   <div key={`${ri}-${ci}`} data-row={ri} data-col={ci}
                     style={{ ...S.cell, width: cellSize, height: cellSize, ...(replaceMode ? S.cellReplace : {}), ...(slot ? { background: slotColor(slot) } : {}) }}
-                    onMouseDown={zoomMode ? undefined : () => { setIsPainting(true); handleCellInteract(ri, ci); }}
+                    onMouseDown={zoomMode ? undefined : () => { strokeHistoryPushed.current = false; setIsPainting(true); handleCellInteract(ri, ci); }}
                     onMouseEnter={zoomMode ? undefined : () => { if (isPainting && !replaceMode) paintCell(ri, ci); }}
                     onMouseUp={zoomMode ? undefined : () => setIsPainting(false)}
-                    onTouchStart={zoomMode ? undefined : () => handleCellInteract(ri, ci)}>
+                    onTouchStart={zoomMode ? undefined : () => { strokeHistoryPushed.current = false; handleCellInteract(ri, ci); }}>
                     {fabric && <img src={fabric.src} alt="" style={S.cellImg} draggable={false} />}
                     {slot && (
                       <div style={S.cellEmpty}>
