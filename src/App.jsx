@@ -66,8 +66,7 @@ export default function QuiltDesigner() {
   const [cellSize, setCellSize] = useState(DEFAULT_CELL);
   const [scale, setScale] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
-  const lastPinchDist = useRef(null);
-  const lastPanPos = useRef(null);
+
   const isDragging = useRef(false);
   const mouseDownPos = useRef(null);
   const fileInputId = "fabric-file-input";
@@ -191,31 +190,55 @@ export default function QuiltDesigner() {
       paintCell(Number(el.dataset.row), Number(el.dataset.col));
   }, [replaceMode, selectedFabric, paintCell, zoomMode]);
 
-  // Zoom-mode gestures
-  const getPinchDist = (e) => Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
-  const handleZoomTouchStart = (e) => {
-    if (e.touches.length === 2) { lastPinchDist.current = getPinchDist(e); isDragging.current = false; }
-    else { lastPanPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }; isDragging.current = true; }
-  };
-  const handleZoomTouchMove = (e) => {
-    e.preventDefault();
-    if (e.touches.length === 2) {
-      const dist = getPinchDist(e);
-      if (lastPinchDist.current) setScale((s) => Math.min(4, Math.max(0.5, s * (dist / lastPinchDist.current))));
-      lastPinchDist.current = dist; isDragging.current = false;
-    } else if (e.touches.length === 1 && isDragging.current) {
-      setPan((p) => ({ x: p.x + e.touches[0].clientX - lastPanPos.current.x, y: p.y + e.touches[0].clientY - lastPanPos.current.y }));
-      lastPanPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-    }
-  };
-  const handleZoomTouchEnd = (e) => {
-    if (e.touches.length < 2) lastPinchDist.current = null;
-    if (e.changedTouches.length === 1 && !isDragging.current) {
-      const t = e.changedTouches[0];
-      const el = document.elementFromPoint(t.clientX, t.clientY);
-      if (el?.dataset.row !== undefined) { strokeHistoryPushed.current = false; handleCellInteract(Number(el.dataset.row), Number(el.dataset.col)); }
-    }
-  };
+  // Zoom-mode touch gestures — native listeners so e.preventDefault() is not passive
+  useEffect(() => {
+    if (!zoomMode) return;
+    const el = canvasAreaRef.current;
+    if (!el) return;
+    let panStart = null;
+    let pinchDist = null;
+    let hasMoved = false;
+    const onStart = (e) => {
+      e.preventDefault();
+      if (e.touches.length === 2) {
+        pinchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+        panStart = null;
+      } else {
+        panStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        pinchDist = null; hasMoved = false;
+      }
+    };
+    const onMove = (e) => {
+      e.preventDefault();
+      if (e.touches.length === 2 && pinchDist !== null) {
+        const d = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
+        setScale((s) => Math.min(4, Math.max(0.5, s * (d / pinchDist))));
+        pinchDist = d;
+      } else if (e.touches.length === 1 && panStart !== null) {
+        const dx = e.touches[0].clientX - panStart.x, dy = e.touches[0].clientY - panStart.y;
+        if (Math.abs(dx) > 3 || Math.abs(dy) > 3) hasMoved = true;
+        setPan((p) => ({ x: p.x + dx, y: p.y + dy }));
+        panStart = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+      }
+    };
+    const onEnd = (e) => {
+      if (e.touches.length < 2) pinchDist = null;
+      if (e.changedTouches.length === 1 && !hasMoved && panStart !== null) {
+        const t = e.changedTouches[0];
+        const target = document.elementFromPoint(t.clientX, t.clientY);
+        if (target?.dataset?.row !== undefined) { strokeHistoryPushed.current = false; handleCellInteract(Number(target.dataset.row), Number(target.dataset.col)); }
+      }
+      if (e.touches.length === 0) panStart = null;
+    };
+    el.addEventListener('touchstart', onStart, { passive: false });
+    el.addEventListener('touchmove', onMove, { passive: false });
+    el.addEventListener('touchend', onEnd, { passive: false });
+    return () => {
+      el.removeEventListener('touchstart', onStart);
+      el.removeEventListener('touchmove', onMove);
+      el.removeEventListener('touchend', onEnd);
+    };
+  }, [zoomMode, handleCellInteract]);
   const handleZoomMouseDown = (e) => { strokeHistoryPushed.current = false; mouseDownPos.current = { x: e.clientX, y: e.clientY, px: pan.x, py: pan.y }; isDragging.current = false; };
   const handleZoomMouseMove = (e) => {
     if (!mouseDownPos.current) return;
@@ -542,15 +565,13 @@ export default function QuiltDesigner() {
 
           <main
             ref={canvasAreaRef}
-            style={{ ...S.canvas, overflow: zoomMode ? "hidden" : "auto", cursor: zoomMode ? "grab" : "default" }}
+            style={{ ...S.canvas, overflow: zoomMode ? "hidden" : "auto", cursor: zoomMode ? "grab" : "default", touchAction: zoomMode ? "none" : "auto" }}
             onMouseDown={zoomMode ? handleZoomMouseDown : undefined}
             onMouseMove={zoomMode ? handleZoomMouseMove : undefined}
             onMouseUp={zoomMode ? handleZoomMouseUp : undefined}
             onMouseLeave={zoomMode ? () => { mouseDownPos.current = null; } : () => setIsPainting(false)}
             onWheel={zoomMode ? handleWheel : undefined}
-            onTouchStart={zoomMode ? handleZoomTouchStart : undefined}
-            onTouchMove={zoomMode ? handleZoomTouchMove : handleTouchMove}
-            onTouchEnd={zoomMode ? handleZoomTouchEnd : undefined}
+            onTouchMove={zoomMode ? undefined : handleTouchMove}
           >
             <div style={quiltGridStyle}>
               {grid.map((row, ri) => row.map((cell, ci) => {
